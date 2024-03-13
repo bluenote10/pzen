@@ -88,6 +88,7 @@ jobs:
         run: |
           echo "github.ref: ${{ github.ref }}"
           echo "github.event_name: ${{ github.event_name }}"
+          echo ${{ secrets.PYPI_KEY }} | wc -c
 
       - name: Publish
         run: |
