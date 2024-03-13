@@ -6,7 +6,7 @@ name: CI
 on:
   push:
     branches:
-    - master
+    - main
   pull_request:
   schedule:
     - cron: '0 0 * * 0' # at 00:00 every Sunday
@@ -91,7 +91,7 @@ jobs:
         run: |
           flit publish
         if:
-          github.ref == 'refs/heads/master' && github.event_name == 'push'
+          github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
           FLIT_USERNAME: __token__
           FLIT_PASSWORD: ${{ secrets.PYPI_KEY }}
