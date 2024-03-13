@@ -1,0 +1,97 @@
+# https://docs.github.com/en/actions/configuring-and-managing-workflows/configuring-a-workflow
+# https://docs.github.com/en/actions/guides/building-and-testing-python
+
+name: CI
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+  schedule:
+    - cron: '0 0 * * 0' # at 00:00 every Sunday
+
+jobs:
+
+  tests:
+
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python-version: ["3.10"]
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          ./scripts/setup_venv.sh
+          pip freeze
+
+      - name: Install package
+        run: |
+          flit install
+
+      - name: Check types
+        run: |
+          mypy .
+
+      - name: Check linter
+        run: |
+          flake8
+
+      - name: Check format
+        run: |
+          black --check .
+          isort --check .
+
+      # - name: Tests
+      #   run: |
+      #     pytest
+
+
+  deploy-pypi:
+
+    needs: tests
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10
+
+      - name: Install dependencies
+        run: |
+          ./scripts/setup_venv.sh
+          pip freeze
+
+      - name: Build
+        run: |
+          flit build
+
+      - name: Check deploy condition
+        run: |
+          echo "github.ref: ${{ github.ref }}"
+          echo "github.event_name: ${{ github.event_name }}"
+
+      - name: Publish
+        run: |
+          flit publish
+        if:
+          github.ref == 'refs/heads/master' && github.event_name == 'push'
+        env:
+          FLIT_USERNAME: __token__
+          FLIT_PASSWORD: ${{ secrets.PYPI_KEY }}
