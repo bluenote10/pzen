@@ -32,7 +32,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          ./scripts/setup_venv.sh
+          pip install -U pip
+          ./scripts/setup_dependencies.sh
           pip freeze
 
       - name: Install package
@@ -71,11 +72,12 @@ jobs:
       - name: Set up python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.10
+          python-version: "3.10"
 
       - name: Install dependencies
         run: |
-          ./scripts/setup_venv.sh
+          pip install -U pip
+          ./scripts/setup_dependencies.sh
           pip freeze
 
       - name: Build

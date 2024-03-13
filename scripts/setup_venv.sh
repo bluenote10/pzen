@@ -6,4 +6,4 @@ virtualenv ./venv
 
 . ./venv/bin/activate
 
-pip install -r requirements_dev.txt
+./setup_dependencies.sh
