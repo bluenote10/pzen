@@ -53,9 +53,9 @@ jobs:
           black --check .
           isort --check .
 
-      # - name: Tests
-      #   run: |
-      #     pytest
+      - name: Tests
+        run: |
+          pytest
 
 
   deploy-pypi:
