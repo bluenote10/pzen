@@ -1,4 +1,5 @@
 joblib
+librosa
 numpy
 scipy
 soundfile

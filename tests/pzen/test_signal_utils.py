@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.testing as npt
 
-from pzen.soundfile_utils import normalize, normalize_min_max
+from pzen.signal_utils import normalize, normalize_min_max
 
 
 def test_normalize():

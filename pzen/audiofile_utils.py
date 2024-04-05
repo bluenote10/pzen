@@ -1,11 +1,36 @@
 from pathlib import Path
 from typing import Literal
 
+import librosa
 import numpy as np
 import soundfile
 import torch
 
+from .cache_utils import with_memory
 from .core_types import StrPath
+from .signal_utils import normalize, normalize_min_max
+
+
+@with_memory
+def load_resampled(
+    path: Path,
+    sr: int,
+    offset_sec: float = 0.0,
+    duration_sec: float | None = None,
+    duration_samples: int | None = None,
+) -> np.ndarray:
+    """
+    Wrapper around librosa.load (because resampling can be somewhat slow, and I prefer
+    the more explicit caching approach).
+    """
+    print(f"Loading audio from '{path}'...")
+    signal, sampling_rate_loaded = librosa.load(
+        path, sr=sr, offset=offset_sec, duration=duration_sec
+    )
+    assert sampling_rate_loaded == sr
+    if duration_samples is not None:
+        signal = signal[:duration_samples]
+    return signal
 
 
 def soundfile_write(
@@ -49,30 +74,3 @@ def soundfile_write(
 
     Path(path).parent.mkdir(exist_ok=True, parents=True)
     soundfile.write(str(path), data, sr)
-
-
-def normalize(array: np.ndarray) -> np.ndarray:
-    """
-    Normalize signal to stay within [-1, +1], but leave the zero point unmodified.
-    """
-    abs_max = np.abs(array).max()
-    if abs_max != 0:
-        return array / abs_max
-    else:
-        return array
-
-
-def normalize_min_max(array: np.ndarray) -> np.ndarray:
-    """
-    This function normalizes the min/max to [-1, +1].
-
-    Note that this can be a bit confusing, because it may look like the output has a constant
-    DC-offset.
-    """
-    max = array.max()
-    min = array.min()
-
-    if max > min:
-        return -1.0 + (array - min) / (max - min) * 2
-    else:
-        return array
