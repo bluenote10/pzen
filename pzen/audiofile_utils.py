@@ -13,7 +13,7 @@ from .signal_utils import normalize, normalize_min_max
 
 @with_memory
 def load_resampled(
-    path: Path,
+    path: StrPath,
     sr: int,
     offset_sec: float = 0.0,
     duration_sec: float | None = None,
