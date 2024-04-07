@@ -2,9 +2,15 @@ import numpy as np
 from scipy.signal import find_peaks as find_peaks_orig
 
 
-def find_peaks(
-    x: np.ndarray, distance: int, ignore_peaks_at_boundary: bool = False
-) -> np.ndarray:
+def assert_same_shape(*arrays: np.ndarray) -> None:
+    shapes = [x.shape for x in arrays]
+    shape_set = set(shapes)
+    assert (
+        len(shape_set) == 1
+    ), f"Expected all tensors to have the same shape, but shapes are: {shapes}"
+
+
+def find_peaks(x: np.ndarray, distance: int, ignore_peaks_at_boundary: bool = False) -> np.ndarray:
     """
     Improved `find_peaks` including a work-around for the strange handling of neighborhoods:
     https://github.com/scipy/scipy/issues/18495

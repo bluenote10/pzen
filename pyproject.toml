@@ -8,3 +8,12 @@ authors = [{name = "Fabian Keller", email = "github.100.fkeller@spamgourmet.com"
 license = {file = "LICENSE"}
 classifiers = ["License :: OSI Approved :: MIT License"]
 dynamic = ["version", "description"]
+
+[tool.black]
+line-length = 100
+
+[tool.isort]
+profile = "black"
+extend_skip_glob = [
+    "stubs/*.pyi",
+]

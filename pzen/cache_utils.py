@@ -24,9 +24,7 @@ def with_memory(f: Callable[P, R]) -> Callable[P, R]:
     """
 
     def cache_validation_cb(metadata: dict[str, Any]) -> bool:
-        time = datetime.datetime.fromtimestamp(metadata["time"]).strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
+        time = datetime.datetime.fromtimestamp(metadata["time"]).strftime("%Y-%m-%d %H:%M:%S")
         duration = metadata["duration"]
         print(
             chalk.bold(

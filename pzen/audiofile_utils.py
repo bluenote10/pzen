@@ -23,7 +23,7 @@ def load_resampled(
     Wrapper around librosa.load (because resampling can be somewhat slow, and I prefer
     the more explicit caching approach).
     """
-    print(f"Loading audio from '{path}'...")
+    print(f"Loading audio from '{path}' at sample rate {sr}...")
     signal, sampling_rate_loaded = librosa.load(
         path, sr=sr, offset=offset_sec, duration=duration_sec
     )
