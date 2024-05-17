@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.testing as npt
 
-from pzen.numpy_utils import find_peaks
+from pzen.numpy_utils import expspace, find_peaks
 
 
 def test_find_peaks__basics():
@@ -32,3 +32,45 @@ def test_find_peaks__test_case_from_issue_18495():
     x[100:] = np.linspace(1.0, 0.0, 100) + np.random.normal(0.0, 1e-2, size=100)
 
     assert len(find_peaks(x, distance=10)) == 1
+
+
+def test_expspace():
+    npt.assert_allclose(
+        expspace(0, 1, n=2, grow_factor=2.0),
+        np.array([0.0, 1.0]),
+    )
+    npt.assert_allclose(
+        expspace(5, 8, n=2, grow_factor=2.0),
+        np.array([5.0, 8.0]),
+    )
+    npt.assert_allclose(
+        expspace(-5, -8, n=2, grow_factor=2.0),
+        np.array([-5.0, -8.0]),
+    )
+
+    npt.assert_allclose(
+        expspace(0, 1, n=3, grow_factor=2.0),
+        np.array([0.0, 1 / 3, 1.0]),
+    )
+    npt.assert_allclose(
+        expspace(0, 1, n=3, grow_factor=0.5),
+        np.array([0.0, 2 / 3, 1.0]),
+    )
+
+    npt.assert_allclose(
+        expspace(5, 8, n=3, grow_factor=2.0),
+        np.array([5.0, 6.0, 8.0]),
+    )
+    npt.assert_allclose(
+        expspace(5, 8, n=3, grow_factor=0.5),
+        np.array([5.0, 7.0, 8.0]),
+    )
+
+    npt.assert_allclose(
+        expspace(-5, -8, n=3, grow_factor=2.0),
+        np.array([-5.0, -6.0, -8.0]),
+    )
+    npt.assert_allclose(
+        expspace(-5, -8, n=3, grow_factor=0.5),
+        np.array([-5.0, -7.0, -8.0]),
+    )

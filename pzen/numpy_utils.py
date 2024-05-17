@@ -51,3 +51,26 @@ def find_peaks(x: np.ndarray, distance: int, ignore_peaks_at_boundary: bool = Fa
         selected_peak_indices.append(peak_idx)
 
     return np.array(selected_peak_indices)
+
+
+def expspace(value_from: float, value_upto: float, n: int, grow_factor: float) -> np.ndarray:
+    """
+    Function similar to np.linspace / np.logspace, but with a slightly more convenient interface
+    than logspace: It allows to specify a `grow_factor` which determines how much larger/smaller
+    each interval is to the next one.
+
+    For instance, if the `grow_factor` is 0.5, the second interval is half the size of the first,
+    the third half the size of the second, etc.
+
+    For lack of a better word, called 'expspace'...
+    """
+    if n <= 1:
+        raise ValueError(f"Number of points must be >= 2, got: {n}")
+
+    scaled = np.cumsum(np.cumprod(np.full(n, grow_factor)))
+
+    scaled_min = np.min(scaled)
+    scaled_max = np.max(scaled)
+    delta_scaled = scaled_max - scaled_min
+    delta_target = value_upto - value_from
+    return (scaled - scaled_min) / delta_scaled * delta_target + value_from
