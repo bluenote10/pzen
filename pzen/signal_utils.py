@@ -53,7 +53,7 @@ def pad_to_multiple_of(x: np.ndarray, block_size: int) -> np.ndarray:
 
 
 @dataclass
-class NumSamples:
+class Samples:
     value: int
 
 
@@ -62,13 +62,13 @@ class Seconds:
     value: float
 
 
-Time = NumSamples | Seconds
+Time = Samples | Seconds
 
 
 def in_samples(t: Time | None, sr: int) -> int:
     if t is None:
         return 0
-    elif isinstance(t, NumSamples):
+    elif isinstance(t, Samples):
         return t.value
     elif isinstance(t, Seconds):
         return round(t.value * sr)
