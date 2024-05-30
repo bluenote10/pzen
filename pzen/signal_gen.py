@@ -24,6 +24,20 @@ class SignalGenerator:
     # Possible extension would be to have `multi_ramp` that takes a vararg of
     # tuples of (delta: Time, value: float), allowing to chain linear ramps
 
+    # Envelope generators
+
+    def envelope_ramped(self, t: Time, t_l: Time, t_r: Time | None = None) -> Signal:
+        """
+        Returns an envelope that ramps up from 0 -> 1 and back from 1 -> 0.
+        """
+        if t_r is None:
+            t_r = t_l
+        n = self._in_samples(t)
+        n_l = self._in_samples(t_l)
+        n_r = self._in_samples(t_r)
+        x = np.ones(n)
+        x[0:n_l] = np.linspace(0.0, 1.0, n_l)
+
     # Audio-like generators
 
     def empty(self) -> Signal:

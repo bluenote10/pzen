@@ -148,6 +148,9 @@ class Signal:
         """Convenience alternative to __len__ for more fluent API."""
         return len(self)
 
+    def len_in_sec(self) -> float:
+        return len(self) / self.sr
+
     # Unary operations
 
     def scale(self, factor: float) -> Signal:
