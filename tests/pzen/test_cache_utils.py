@@ -2,7 +2,7 @@ import numpy as np
 
 from pzen.cache_utils import _CACHE_DIR, with_memory
 
-_CALLS = []
+_CALLS: list[tuple[float, str, np.ndarray]] = []
 
 
 @with_memory

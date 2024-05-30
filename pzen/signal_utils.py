@@ -235,7 +235,7 @@ class SignalGenerator:
 
     def ramp(self, t: Time, start: float = 0.0, end: float = 1.0) -> Signal:
         n = self._in_samples(t)
-        return self._make_signal(np.arange(start, end, n))
+        return self._make_signal(np.linspace(start, end, n))
 
     # Possible extension would be to have `multi_ramp` that takes a vararg of
     # tuples of (delta: Time, value: float), allowing to chain linear ramps
