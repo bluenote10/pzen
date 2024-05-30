@@ -3,9 +3,9 @@ import numpy.testing as npt
 import pytest
 
 from pzen.signal_utils import (
-    Audio,
     Samples,
     Seconds,
+    Signal,
     normalize,
     normalize_min_max,
     pad_to_multiple_of,
@@ -72,31 +72,31 @@ def sr(request: pytest.FixtureRequest) -> int:
     return sr_value
 
 
-def test_audio__add():
-    a = Audio(x=np.array([1.0, 0.0, 0.0]), sr=1)
-    b = Audio(x=np.array([0.0, 1.0, 0.0]), sr=1)
+def test_signal__add():
+    a = Signal(x=np.array([1.0, 0.0, 0.0]), sr=1)
+    b = Signal(x=np.array([0.0, 1.0, 0.0]), sr=1)
     npt.assert_allclose((a + b).x, [1.0, 1.0, 0.0])
 
 
-def test_audio__pad(sr: int):
-    audio = Audio.empty(sr)
-    assert len(audio) == 0
-    assert audio.pad().len() == 0
-    assert audio.pad(pad_l=Samples(10)).len() == 10
-    assert audio.pad(pad_r=Samples(20)).len() == 20
-    assert audio.pad(pad_l=Samples(10), pad_r=Samples(20)).len() == 30
+def test_signal__pad(sr: int):
+    x = Signal.empty(sr)
+    assert len(x) == 0
+    assert x.pad().len() == 0
+    assert x.pad(pad_l=Samples(10)).len() == 10
+    assert x.pad(pad_r=Samples(20)).len() == 20
+    assert x.pad(pad_l=Samples(10), pad_r=Samples(20)).len() == 30
 
-    audio = Audio.silence(Seconds(1.0), sr)
-    assert len(audio) == sr
-    assert audio.pad().len() == sr
-    assert audio.pad(pad_l=Samples(10)).len() == sr + 10
-    assert audio.pad(pad_r=Samples(20)).len() == sr + 20
-    assert audio.pad(pad_l=Samples(10), pad_r=Samples(20)).len() == sr + 30
+    x = Signal.zeros(Seconds(1.0), sr)
+    assert len(x) == sr
+    assert x.pad().len() == sr
+    assert x.pad(pad_l=Samples(10)).len() == sr + 10
+    assert x.pad(pad_r=Samples(20)).len() == sr + 20
+    assert x.pad(pad_l=Samples(10), pad_r=Samples(20)).len() == sr + 30
 
 
-def test_audio__mix_at():
-    a = Audio(x=np.array([1.0, 2.0, 3.0]), sr=1)
-    b = Audio(x=np.array([1.0]), sr=1)
+def test_signal__mix_at():
+    a = Signal(x=np.array([1.0, 2.0, 3.0]), sr=1)
+    b = Signal(x=np.array([1.0]), sr=1)
 
     npt.assert_allclose(a.mix_at(Samples(0), b).x, [2.0, 2.0, 3.0])
     npt.assert_allclose(a.mix_at(Samples(1), b).x, [1.0, 3.0, 3.0])
@@ -106,10 +106,11 @@ def test_audio__mix_at():
 
     npt.assert_allclose(a.x, [1.0, 2.0, 3.0])
 
+    a.mix_at(Samples(2), b, allow_extend=False)
     with pytest.raises(ValueError):
         a.mix_at(Samples(3), b, allow_extend=False)
 
-    b = Audio(x=np.array([1.0, 1.0]), sr=1)
+    b = Signal(x=np.array([1.0, 1.0]), sr=1)
 
     npt.assert_allclose(a.mix_at(Samples(0), b).x, [2.0, 3.0, 3.0])
     npt.assert_allclose(a.mix_at(Samples(1), b).x, [1.0, 3.0, 4.0])

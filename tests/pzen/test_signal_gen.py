@@ -1,8 +1,8 @@
-from pzen.audio_gen import AudioGenerator
+from pzen.signal_gen import SignalGenerator
 
 
 def test_audio_generator__consistent_dtypes():
-    gen = AudioGenerator(sr=22050)
+    gen = SignalGenerator(sr=22050)
     dtypes = [
         gen.empty().x.dtype,
         gen.silence().x.dtype,

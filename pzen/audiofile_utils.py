@@ -8,7 +8,7 @@ import torch
 
 from .cache_utils import with_memory
 from .core_types import StrPath
-from .signal_utils import normalize, normalize_min_max
+from .signal_utils import Signal, normalize, normalize_min_max
 
 
 @with_memory
@@ -18,7 +18,7 @@ def load_resampled(
     offset_sec: float = 0.0,
     duration_sec: float | None = None,
     duration_samples: int | None = None,
-) -> np.ndarray:
+) -> Signal:
     """
     Wrapper around librosa.load (because resampling can be somewhat slow, and I prefer
     the more explicit caching approach).
@@ -30,7 +30,7 @@ def load_resampled(
     assert sampling_rate_loaded == sr
     if duration_samples is not None:
         signal = signal[:duration_samples]
-    return signal
+    return Signal(x=signal, sr=sr)
 
 
 def soundfile_write(
