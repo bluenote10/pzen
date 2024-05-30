@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Literal
+from typing import Literal, overload
 
 import librosa
 import numpy as np
@@ -33,10 +33,29 @@ def load_resampled(
     return Signal(x=signal, sr=sr)
 
 
+@overload
 def soundfile_write(
     path: StrPath,
     data: np.ndarray | torch.Tensor,
     sr: int,
+    *,
+    clip: Literal["normalize", "normalize_min_max", "ignore", "warn", "error"] = "warn",
+) -> None: ...
+
+
+@overload
+def soundfile_write(
+    path: StrPath,
+    data: Signal,
+    *,
+    clip: Literal["normalize", "normalize_min_max", "ignore", "warn", "error"] = "warn",
+) -> None: ...
+
+
+def soundfile_write(
+    path: StrPath,
+    data: np.ndarray | torch.Tensor | Signal,
+    sr: int | None = None,
     *,
     clip: Literal["normalize", "normalize_min_max", "ignore", "warn", "error"] = "warn",
 ) -> None:
@@ -53,7 +72,11 @@ def soundfile_write(
 
     if isinstance(data, torch.Tensor):
         data = data.detach().cpu().numpy()
+    elif isinstance(data, Signal):
+        sr = data.sr
+        data = data.x
 
+    assert sr is not None
     assert isinstance(data, np.ndarray)
     assert np.all(np.isfinite(data)), "Audio data contains NaNs or Infs."
 
