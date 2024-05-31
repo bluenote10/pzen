@@ -49,6 +49,11 @@ def test_normalize_min_max():
         np.array([0.0, 0.0, 0.0]),
     )
 
+    npt.assert_allclose(
+        normalize_min_max(np.array([0.0, 0.2, 0.4]), 5, 10),
+        np.array([5.0, 7.5, 10.0]),
+    )
+
 
 def test_pad_to_blocksize():
     x = pad_to_multiple_of(np.array([]), 3)
@@ -232,9 +237,21 @@ def test_signal_generator__audio_examples():
     out_dir = Path("/tmp/signal_generator")
     gen = SignalGenerator(sr=22050)
 
-    sine_enveloped = gen.sine(440).scale(0.5).envelope_ramped(Seconds(0.2))
-    soundfile_write(out_dir / "sine_enveloped.wav", sine_enveloped)
+    soundfile_write(
+        out_dir / "sine_enveloped_lin.wav",
+        gen.sine(440).scale(0.5).envelope_ramped(Seconds(0.2), kind="lin"),
+    )
+    soundfile_write(
+        out_dir / "sine_enveloped_exp.wav",
+        gen.sine(440).scale(0.5).envelope_ramped(Seconds(0.2), kind="exp"),
+    )
 
     t = Seconds(10)
-    sine_ramped = gen.sine(440, t=t) * gen.ramp(t, 0.0, 1.0)
-    soundfile_write(out_dir / "sine_ramped.wav", sine_ramped)
+    soundfile_write(
+        out_dir / "sine_ramped_lin.wav",
+        gen.sine(440, t=t) * gen.ramp(t, 0.0, 1.0),
+    )
+    soundfile_write(
+        out_dir / "sine_ramped_exp.wav",
+        gen.sine(440, t=t) * gen.ramp(t, 0.0, 1.0).into_exp_envelope(),
+    )
