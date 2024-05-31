@@ -354,6 +354,17 @@ class SignalGenerator:
 
         return self._make_signal(freqs)
 
+    def sweep(
+        self,
+        t: Time,
+        f1: float,
+        f2: float,
+    ) -> Signal:
+        n = self._in_samples(t)
+        ratio = f2 / f1
+        freqs = f1 * np.exp(np.linspace(0.0, np.log(ratio), n))
+        return self._make_signal(freqs)
+
     # Audio-like generators
 
     def silence(self, t: Time = DEFAULT_TIME) -> Signal:

@@ -277,3 +277,17 @@ def test_signal_generator__audio_examples():
         out_dir / "vibrato_3.wav",
         gen.sine_from_freqs(gen.vibrato(t, 440.0, semitones=1.0, t_l=Seconds(1.0))).scale(0.5),
     )
+
+    t = Seconds(5)
+    soundfile_write(
+        out_dir / "sweep_1.wav",
+        gen.sine_from_freqs(gen.sweep(t, 220.0, 880.0)).scale(0.5),
+    )
+    soundfile_write(
+        out_dir / "sweep_2.wav",
+        gen.sine_from_freqs(gen.sweep(t, 220.0, 55.0)).scale(0.5),
+    )
+    soundfile_write(
+        out_dir / "sweep_3.wav",
+        gen.sine_from_freqs(gen.sweep(t, 20.0, 10000.0)).scale(0.5),
+    )
