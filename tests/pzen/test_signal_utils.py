@@ -239,11 +239,11 @@ def test_signal_generator__audio_examples():
 
     soundfile_write(
         out_dir / "sine_enveloped_lin.wav",
-        gen.sine(440).scale(0.5).envelope_ramped(Seconds(0.2), kind="lin"),
+        gen.sine(440).scale(0.5).envelope_ramped("lin", Seconds(0.2)),
     )
     soundfile_write(
         out_dir / "sine_enveloped_exp.wav",
-        gen.sine(440).scale(0.5).envelope_ramped(Seconds(0.2), kind="exp"),
+        gen.sine(440).scale(0.5).envelope_ramped("exp", Seconds(0.2)),
     )
 
     t = Seconds(10)
@@ -254,4 +254,26 @@ def test_signal_generator__audio_examples():
     soundfile_write(
         out_dir / "sine_ramped_exp.wav",
         gen.sine(440, t=t) * gen.ramp(t, 0.0, 1.0).into_exp_envelope(),
+    )
+
+    t = Seconds(1)
+    soundfile_write(
+        out_dir / "sine_from_freqs.wav",
+        gen.sine_from_freqs(
+            gen.full(t, 220.0).concat(gen.full(t, 440.0)).concat(gen.full(t, 880.0))
+        ).scale(0.5),
+    )
+
+    t = Seconds(3)
+    soundfile_write(
+        out_dir / "vibrato_1.wav",
+        gen.sine_from_freqs(gen.vibrato(t, 440.0)).scale(0.5),
+    )
+    soundfile_write(
+        out_dir / "vibrato_2.wav",
+        gen.sine_from_freqs(gen.vibrato(t, 440.0, f_vibrato=8)).scale(0.5),
+    )
+    soundfile_write(
+        out_dir / "vibrato_3.wav",
+        gen.sine_from_freqs(gen.vibrato(t, 440.0, semitones=1.0, t_l=Seconds(1.0))).scale(0.5),
     )

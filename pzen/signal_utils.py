@@ -118,6 +118,16 @@ class Signal:
         n = in_samples(t, sr)
         return Signal(x=np.zeros(n), sr=sr)
 
+    @staticmethod
+    def ones(t: Time, sr: int) -> Signal:
+        n = in_samples(t, sr)
+        return Signal(x=np.ones(n), sr=sr)
+
+    @staticmethod
+    def full(t: Time, value: float, sr: int) -> Signal:
+        n = in_samples(t, sr)
+        return Signal(x=np.full(n, value), sr=sr)
+
     # Basic operators
 
     def __len__(self) -> int:
@@ -207,6 +217,12 @@ class Signal:
         x = pad_to_multiple_of(self.x, block_size=self.in_samples(block_size))
         return Signal(x, self.sr)
 
+    def concat(self, other: Signal) -> Signal:
+        assert (
+            self.sr == other.sr
+        ), f"Can only concatenate signals of same sample rate, but {self.sr} != {other.sr}"
+        return Signal(x=np.concatenate([self.x, other.x]), sr=self.sr)
+
     # Advanced operations
 
     def mix_at(self, offset: Time, other: Signal, allow_extend: bool = True) -> Signal:
@@ -234,7 +250,7 @@ class Signal:
 
     # Envelope modulations
 
-    def envelope_ramped(self, t_l: Time, t_r: Time | None = None, kind: LinExp = "exp") -> Signal:
+    def envelope_ramped(self, kind: LinExp, t_l: Time, t_r: Time | None = None) -> Signal:
         gen = SignalGenerator(self.sr)
         envelope = gen.envelope_ramped(Samples(self.len()), t_l, t_r)
         if kind == "exp":
@@ -259,6 +275,20 @@ class SignalGenerator:
 
     def _make_signal(self, x: np.ndarray) -> Signal:
         return Signal(x=x, sr=self.sr)
+
+    # Forwarded construction helpers
+
+    def empty(self) -> Signal:
+        return Signal.empty(sr=self.sr)
+
+    def zeros(self, t: Time) -> Signal:
+        return Signal.zeros(t, sr=self.sr)
+
+    def ones(self, t: Time) -> Signal:
+        return Signal.ones(t, sr=self.sr)
+
+    def full(self, t: Time, value: float) -> Signal:
+        return Signal.full(t, value, sr=self.sr)
 
     # General purpose generators
 
@@ -302,12 +332,32 @@ class SignalGenerator:
                 x2 = ramp_r[-n:]
             return self._make_signal(np.minimum(x1, x2))
 
+    # Frequency generators
+
+    def vibrato(
+        self,
+        t: Time,
+        f: float,
+        f_vibrato: float = 6.0,
+        semitones: float = 0.3,
+        t_l: Time = Seconds(0.1),
+        t_r: Time | None = None,
+    ) -> Signal:
+        if t_r is None:
+            t_r = t_l
+
+        modulation_strength = Signal.ones(t, sr=self.sr).envelope_ramped("lin", t_l, t_r).x
+        modulation = modulation_strength * self.sine(freq=f_vibrato, t=t).scale(semitones).x
+
+        factors = 2 ** (modulation / 12.0)
+        freqs = f * factors
+
+        return self._make_signal(freqs)
+
     # Audio-like generators
 
-    def empty(self) -> Signal:
-        return Signal.empty(self.sr)
-
     def silence(self, t: Time = DEFAULT_TIME) -> Signal:
+        # Technically redundant to `zeros` but alias can express intent better.
         return Signal.zeros(t, self.sr)
 
     def sine(
@@ -319,4 +369,10 @@ class SignalGenerator:
         n = self._in_samples(t)
         ts = np.arange(n) / self.sr
         x = np.sin(phase_offset + 2.0 * np.pi * freq * ts)
+        return self._make_signal(x)
+
+    def sine_from_freqs(self, freqs: Signal, phase_offset: float = 0.0) -> Signal:
+        assert self.sr == freqs.sr
+        phases = np.cumsum(freqs.x) / self.sr
+        x = np.sin(phase_offset + 2.0 * np.pi * phases)
         return self._make_signal(x)
