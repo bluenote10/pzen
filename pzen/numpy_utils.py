@@ -1,4 +1,3 @@
-import sys
 from typing import Callable
 
 import numpy as np
@@ -157,7 +156,7 @@ def expspace_delta(value_from: float, value_upto: float, n: int, delta: float) -
     # not the number of points to generate.
     N = n - 1
 
-    def f(x: float) -> float:
+    def f(x: float) -> float | None:
         # Return the value of geometric series up to term N.
         if x == 1.0:
             return N
@@ -165,13 +164,18 @@ def expspace_delta(value_from: float, value_upto: float, n: int, delta: float) -
             try:
                 return (1 - x**N) / (1 - x)
             except OverflowError:
-                return -sys.float_info.max
+                return None
 
     ratio = delta / (value_range / N)
     if ratio < 1.0:
         # Growing case
         x_l = 1.0
         x_r = c
+        # Evaluating the geometric series for large factors can overflow in the `x**N`
+        # term. We bring the factor down closer to 1.0 via square-rooting until we have
+        # a valid value.
+        while f(x_r) is None:
+            x_r = np.sqrt(x_r)
     elif ratio > 1.0:
         # Shrinking case
         x_l = 0.0
@@ -179,34 +183,41 @@ def expspace_delta(value_from: float, value_upto: float, n: int, delta: float) -
     else:
         return expspace(value_from, value_upto, n, grow_factor=1.0)
 
-    assert (
-        f(x_l) - c < 0.0
-    ), f"Expected `f(x_l) - c` to be negative, but is {f(x_l) - c} ({x_l=}, {c=})"
-    assert (
-        f(x_r) - c > 0.0
-    ), f"Expected `f(x_r) - c` to be positive, but is {f(x_r) - c} ({x_r=}, {c=})"
+    f_l = f(x_l)
+    f_r = f(x_r)
+    assert f_l is not None
+    assert f_r is not None
+    assert f_l - c < 0.0, f"Expected `f(x_l) - c` to be negative, but is {f_l - c} ({x_l=}, {c=})"
+    assert f_r - c > 0.0, f"Expected `f(x_r) - c` to be positive, but is {f_r - c} ({x_r=}, {c=})"
 
     # Initially I was using Newton-Raphson instead, but since the equation has two
     # roots, there is a danger of finding the wrong solution. Bisecting can avoid
     # that be initializing properly.
-    x = bisect(lambda x: f(x) - c, x_l, x_r)
+    x = bisect(lambda x: f(x), c, x_l, x_r)
 
     return expspace(value_from, value_upto, n, grow_factor=x)
 
 
-Func = Callable[[float], float]
+Func = Callable[[float], float | None]
 
 
-def bisect(f: Func, x_l: float, x_r: float, tol: float = 1e-8, max_iter: int = 10000) -> float:
+def bisect(
+    f: Func, target: float, x_l: float, x_r: float, tol: float = 1e-8, max_iter: int = 10000
+) -> float:
 
     for _ in range(max_iter):
         x_mid = (x_l + x_r) * 0.5
         f_x_mid = f(x_mid)
 
-        if abs(f_x_mid) < tol:
+        if f_x_mid is None:
+            raise RuntimeError(f"f has overflowed for {x_mid=}")
+
+        delta = f_x_mid - target
+
+        if abs(delta) < tol:
             return x_mid
 
-        if f_x_mid < 0.0:
+        if delta < 0.0:
             x_l = x_mid
         else:
             x_r = x_mid

@@ -174,7 +174,7 @@ def test_expspace_delta__neutral():
 
 
 @pytest.mark.parametrize("n", [3, 10, 100, 1000, 10000])
-def test_expspace_delta__misc(n: int):
+def test_expspace_delta__misc_1(n: int):
     result = expspace_delta(0.0, 1000.0, n=n, delta=10.0)
     npt.assert_allclose(
         result[:2],
@@ -183,4 +183,16 @@ def test_expspace_delta__misc(n: int):
     npt.assert_allclose(
         result[-1],
         np.array(1000.0),
+    )
+
+
+def test_expspace_delta__misc_2():
+    result = expspace_delta(0.0, 22050 * 4, n=100, delta=10.0)
+    npt.assert_allclose(
+        result[:2],
+        np.array([0.0, 10.0]),
+    )
+    npt.assert_allclose(
+        result[-1],
+        np.array(22050 * 4),
     )
