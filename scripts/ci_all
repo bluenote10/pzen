@@ -2,8 +2,8 @@
 
 cd $(dirname $0)/..
 
-mypy . && \
-pytest && \
-black --check . && \
-isort --check . && \
+mypy .
+pytest
+black --check .
+isort --check .
 flake8
