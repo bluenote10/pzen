@@ -239,11 +239,11 @@ def test_signal_generator__audio_examples():
 
     soundfile_write(
         out_dir / "sine_enveloped_lin.wav",
-        gen.sine(440).scale(0.5).envelope_ramped("lin", Seconds(0.2)),
+        gen.sine(440).scale(0.5).apply_envelope_ramped("lin", Seconds(0.2)),
     )
     soundfile_write(
         out_dir / "sine_enveloped_exp.wav",
-        gen.sine(440).scale(0.5).envelope_ramped("exp", Seconds(0.2)),
+        gen.sine(440).scale(0.5).apply_envelope_ramped("exp", Seconds(0.2)),
     )
 
     t = Seconds(10)

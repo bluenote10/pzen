@@ -192,7 +192,7 @@ def expspace_delta(value_from: float, value_upto: float, n: int, delta: float) -
 
     # Initially I was using Newton-Raphson instead, but since the equation has two
     # roots, there is a danger of finding the wrong solution. Bisecting can avoid
-    # that be initializing properly.
+    # that by initializing properly.
     x = bisect(lambda x: f(x), c, x_l, x_r)
 
     return expspace(value_from, value_upto, n, grow_factor=x)

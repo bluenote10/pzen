@@ -134,6 +134,12 @@ class Signal:
         return len(self.x)
 
     def __add__(self, other: Signal) -> Signal:
+        """
+        Element-wise addition of two signals.
+
+        Note that this is not a concatenation operator like a list `+`. Use `Signal.concat`
+        or `Generator.concat` for concatenation purposes.
+        """
         assert (
             self.sr == other.sr
         ), f"Can only add signals of same sample rate, but {self.sr} != {other.sr}"
@@ -144,6 +150,9 @@ class Signal:
         return Signal(x=self.x + other.x, sr=self.sr)
 
     def __mul__(self, other: Signal) -> Signal:
+        """
+        Element-wise multiplication of two signals.
+        """
         assert (
             self.sr == other.sr
         ), f"Can only multiply signals of same sample rate, but {self.sr} != {other.sr}"
@@ -173,6 +182,9 @@ class Signal:
     def scale(self, factor: float) -> Signal:
         return Signal(factor * self.x, self.sr)
 
+    def scale_envelope(self, envelope: Signal) -> Signal:
+        return envelope * self
+
     def abs(self) -> Signal:
         return Signal(np.abs(self.x), self.sr)
 
@@ -184,26 +196,6 @@ class Signal:
 
     def normalize_min_max(self, min: float = -1.0, max: float = 1.0) -> Signal:
         return Signal(normalize_min_max(self.x, min, max), self.sr)
-
-    def into_exp_envelope(self, min_db: float = -80.0, quantity: Quantity = "root-power") -> Signal:
-        """
-        Converts a given (linear) envelope, assumed to be in [0.0, 1.0] to an equivalent _exponentially_
-        scaled envelope to counter the _logarithmic_ perception of loudness.
-
-        Due to the nature of the conversion, a minimum level has to be specified, which is easiest
-        to do in terms of decibel. Downside: The conversion from decibel to a plain factor requires
-        to clarify to quantity semantics, i.e., "root-power quantity" or "power quantity". Since
-        envelopes typically operate on amplitude level, which are root-power quantities, we default
-        to "root-power".
-        """
-        decibels = self.normalize_min_max(min_db, 0.0).x
-        if quantity == "root-power":
-            factors = 10 ** (decibels / 20)
-        elif quantity == "power":
-            factors = 10 ** (decibels / 10)
-        else:
-            assert_never(quantity)
-        return Signal(x=factors, sr=self.sr)
 
     # Length affecting operations
 
@@ -248,14 +240,34 @@ class Signal:
         x[offset_index : offset_index + other.len()] += other.x
         return Signal(x=x, sr=self.sr)
 
-    # Envelope modulations
+    # Envelope modulations (shape preserving)
 
-    def envelope_ramped(self, kind: LinExp, t_l: Time, t_r: Time | None = None) -> Signal:
+    def apply_envelope_ramped(self, kind: LinExp, t_l: Time, t_r: Time | None = None) -> Signal:
         gen = SignalGenerator(self.sr)
         envelope = gen.envelope_ramped(Samples(self.len()), t_l, t_r)
         if kind == "exp":
             envelope = envelope.into_exp_envelope()
-        return envelope * self
+        return self.scale_envelope(envelope)
+
+    def into_exp_envelope(self, min_db: float = -80.0, quantity: Quantity = "root-power") -> Signal:
+        """
+        Converts a given (linear) envelope, assumed to be in [0.0, 1.0] to an equivalent _exponentially_
+        scaled envelope to counter the _logarithmic_ perception of loudness.
+
+        Due to the nature of the conversion, a minimum level has to be specified, which is easiest
+        to do in terms of decibel. Downside: The conversion from decibel to a plain factor requires
+        to clarify the quantity semantics, i.e., "root-power quantity" or "power quantity". Since
+        envelopes typically operate on amplitude level, which are root-power quantities, we default
+        to "root-power".
+        """
+        decibels = self.normalize_min_max(min_db, 0.0).x
+        if quantity == "root-power":
+            factors = 10 ** (decibels / 20)
+        elif quantity == "power":
+            factors = 10 ** (decibels / 10)
+        else:
+            assert_never(quantity)
+        return Signal(x=factors, sr=self.sr)
 
 
 # -----------------------------------------------------------------------------
@@ -289,6 +301,17 @@ class SignalGenerator:
 
     def full(self, t: Time, value: float) -> Signal:
         return Signal.full(t, value, sr=self.sr)
+
+    # Convenience helpers
+
+    def concat(self, *signals: Signal) -> Signal:
+        if len(signals) == 0:
+            return self.empty()
+        else:
+            signal = signals[0]
+            for other in signals[1:]:
+                signal = signal.concat(other)
+            return signal
 
     # General purpose generators
 
@@ -346,7 +369,7 @@ class SignalGenerator:
         if t_r is None:
             t_r = t_l
 
-        modulation_strength = Signal.ones(t, sr=self.sr).envelope_ramped("lin", t_l, t_r).x
+        modulation_strength = Signal.ones(t, sr=self.sr).apply_envelope_ramped("lin", t_l, t_r).x
         modulation = modulation_strength * self.sine(freq=f_vibrato, t=t).scale(semitones).x
 
         factors = 2 ** (modulation / 12.0)
