@@ -102,7 +102,8 @@ def plot_grid(
     fig_title: str | None = None,
     interactive: bool = False,
     save_as: StrPath | None = None,
-    sharey: bool = True,
+    sharex: bool = False,
+    sharey: bool = False,
     run_gc_collection: bool = False,
 ) -> Generator[tuple[Figure, list[list[Axes]]], None, None]:
     with _subplots_wrapper(
@@ -112,7 +113,7 @@ def plot_grid(
         fig_title=fig_title,
         interactive=interactive,
         save_as=save_as,
-        sharex=False,
+        sharex=sharex,
         sharey=sharey,
         run_gc_collection=run_gc_collection,
     ) as (fig, axes):
