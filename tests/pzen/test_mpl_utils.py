@@ -46,3 +46,17 @@ def test_subplots_wrapper__plot_cols(tmp_path: Path):
         axes[2].plot([1, 2, 3])
 
     assert plot_path.is_file()
+
+
+def test_subplots_wrapper__plot_grid(tmp_path: Path):
+    plot_path = tmp_path / "subdir" / "plot.png"
+    with mpl_utils.plot_grid(2, 3, save_as=plot_path) as (fig, axes):
+        assert_type(fig, Figure)
+        assert isinstance(fig, Figure)
+        assert_type(axes, list[list[Axes]])
+
+        for i in range(2):
+            for j in range(3):
+                axes[i][j].plot([1, 2, 3])
+
+    assert plot_path.is_file()

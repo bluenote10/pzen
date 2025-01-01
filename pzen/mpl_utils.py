@@ -13,6 +13,11 @@ from .core_types import StrPath
 _DEFAULT_FIGSIZE = (12, 8)
 
 
+def _assert_axes(x: object) -> Axes:
+    assert isinstance(x, Axes)
+    return x
+
+
 @contextmanager
 def plot(
     figsize: tuple[float, float] = _DEFAULT_FIGSIZE,
@@ -32,8 +37,7 @@ def plot(
         sharey=False,
         run_gc_collection=run_gc_collection,
     ) as (fig, axes):
-        assert isinstance(axes, Axes)
-        yield fig, axes
+        yield fig, _assert_axes(axes)
 
 
 @contextmanager
@@ -59,8 +63,7 @@ def plot_rows(
     ) as (fig, axes):
         # Note that matplotlib returns a numpy array, which is type erasing and
         # has no practical benefits to me. Therefore, convert to a list.
-        axes = list(axes)
-        assert all(isinstance(ax, Axes) for ax in axes)
+        axes = [_assert_axes(ax) for ax in axes]
         yield fig, axes
 
 
@@ -87,9 +90,45 @@ def plot_cols(
     ) as (fig, axes):
         # Note that matplotlib returns a numpy array, which is type erasing and
         # has no practical benefits to me. Therefore, convert to a list.
-        axes = list(axes)
-        assert all(isinstance(ax, Axes) for ax in axes)
+        axes = [_assert_axes(ax) for ax in axes]
         yield fig, axes
+
+
+@contextmanager
+def plot_grid(
+    nrows: int,
+    ncols: int,
+    figsize: tuple[float, float] = _DEFAULT_FIGSIZE,
+    fig_title: str | None = None,
+    interactive: bool = False,
+    save_as: StrPath | None = None,
+    sharey: bool = True,
+    run_gc_collection: bool = False,
+) -> Generator[tuple[Figure, list[list[Axes]]], None, None]:
+    with _subplots_wrapper(
+        nrows=nrows,
+        ncols=ncols,
+        figsize=figsize,
+        fig_title=fig_title,
+        interactive=interactive,
+        save_as=save_as,
+        sharex=False,
+        sharey=sharey,
+        run_gc_collection=run_gc_collection,
+    ) as (fig, axes):
+        # Note that matplotlib returns a numpy array, which is type erasing and
+        # has no practical benefits to me. Therefore, convert to a list.
+        axes = [[_assert_axes(ax) for ax in sub] for sub in axes]
+        yield fig, axes
+
+
+def _apply_grid_recursive(axes: object) -> None:
+    if isinstance(axes, Axes):
+        axes.grid()
+    else:
+        assert isinstance(axes, Iterable)
+        for ax in axes:
+            _apply_grid_recursive(ax)
 
 
 @contextmanager
@@ -115,11 +154,7 @@ def _subplots_wrapper(
     if fig_title is not None:
         fig.suptitle(fig_title)
 
-    if isinstance(axes, Iterable):
-        for ax in axes:
-            ax.grid()
-    else:
-        axes.grid()
+    _apply_grid_recursive(axes)
 
     try:
         yield fig, axes
